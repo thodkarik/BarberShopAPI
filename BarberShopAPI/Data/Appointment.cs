@@ -1,4 +1,6 @@
-﻿namespace BarberShopAPI.Data
+﻿using BarberShopAPI.Core.Enums;
+
+namespace BarberShopAPI.Data
 {
     public class Appointment : BaseEntity
     {
