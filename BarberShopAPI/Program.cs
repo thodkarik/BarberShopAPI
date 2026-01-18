@@ -12,10 +12,12 @@ namespace BarberShopAPI
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            var connString = builder.Configuration.GetConnectionString("DefaultConnection");
 
             // Add services to the container.
             builder.Host.UseSerilog((ctx, lc) =>
-                lc.ReadFrom.Configuration(ctx.Configuration));
+                lc.ReadFrom.Configuration(ctx.Configuration),
+                preserveStaticLogger: true);
 
             builder.Services.AddCors(options =>
             {
@@ -38,6 +40,7 @@ namespace BarberShopAPI
            
 
             var app = builder.Build();
+            Log.Information("APPLICATION STARTED");
 
 
             // Configure the HTTP request pipeline.
