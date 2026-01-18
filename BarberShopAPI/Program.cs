@@ -1,6 +1,8 @@
 
 using BarberShopAPI.Data;
 using BarberShopAPI.Helpers.BarberShopAPI.Middlewares;
+using BarberShopAPI.Repositories;
+using BarberShopAPI.Services;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -28,6 +30,9 @@ namespace BarberShopAPI
                           .AllowAnyHeader();
                 });
             });
+
+            builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            builder.Services.AddScoped<IServiceService, ServiceService>();
 
             builder.Services.AddControllers();
             
