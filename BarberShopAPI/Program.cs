@@ -1,6 +1,7 @@
 
 using BarberShopAPI.Data;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace BarberShopAPI
 {
@@ -11,6 +12,8 @@ namespace BarberShopAPI
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            builder.Host.UseSerilog((ctx, lc) =>
+                lc.ReadFrom.Configuration(ctx.Configuration));
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -21,6 +24,8 @@ namespace BarberShopAPI
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             var app = builder.Build();
+
+            app.UseSerilogRequestLogging();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
