@@ -62,16 +62,22 @@ namespace BarberShopAPI.Services
                 a.Status == AppointmentStatus.Scheduled &&
                !a.IsDeleted);
 
+            var serviceIds = barberAppointments.Select(a => a.ServiceId).Distinct().ToList();
+            var services = await _serviceRepository.GetAllAsync(s => serviceIds.Contains(s.Id) && !s.IsDeleted);
+            var durationByServiceId = services.ToDictionary(s => s.Id, s => s.DurationMinutes);
+
             foreach (var existing in barberAppointments)
             {
-                var appointmentEnd = existing.AppointmentDateTime
-                    .AddMinutes(existing.Service.DurationMinutes);
+                if (!durationByServiceId.TryGetValue(existing.ServiceId, out var existingDuration))
+                    continue;
 
-                bool overlaps = 
-                    start < appointmentEnd && end > existing.AppointmentDateTime;
+                var existingStart = existing.AppointmentDateTime;
+                var existingEnd = existingStart.AddMinutes(existingDuration);
+
+                bool overlaps = start < existingEnd && end > existingStart;
 
                 if (overlaps)
-                    throw new ConflictException("APPOINTMENT", "The barber is already booked for the selected time slot.");
+                    throw new ConflictException("APPOINTMENT", "Selected time slot is not available");
             }
 
             var appointment = new Appointment

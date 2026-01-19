@@ -1,5 +1,6 @@
 
 using BarberShopAPI.Data;
+using BarberShopAPI.Data.Seed;
 using BarberShopAPI.Helpers.BarberShopAPI.Middlewares;
 using BarberShopAPI.Repositories;
 using BarberShopAPI.Services;
@@ -69,6 +70,14 @@ namespace BarberShopAPI
 
 
             app.MapControllers();
+
+            if (app.Environment.IsDevelopment())
+            {
+                using var scope = app.Services.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                DbSeeder.Seed(context);
+            }
+
 
             app.Run();
         }
