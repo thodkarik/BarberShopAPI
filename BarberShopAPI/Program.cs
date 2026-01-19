@@ -34,6 +34,8 @@ namespace BarberShopAPI
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             builder.Services.AddScoped<IServiceService, ServiceService>();
 
+            builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+
             builder.Services.AddControllers();
             
             builder.Services.AddEndpointsApiExplorer();
