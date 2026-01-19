@@ -56,6 +56,10 @@ namespace BarberShopAPI.Data
                     .HasForeignKey(a => a.ServiceId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+            modelBuilder.Entity<Service>()
+                    .Property(s => s.Price)
+                    .HasPrecision(18, 2);
         }
     }
 }
