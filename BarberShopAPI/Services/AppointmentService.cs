@@ -95,5 +95,47 @@ namespace BarberShopAPI.Services
 
             return appointment;
         }
+
+        public async Task<List<AvailabilityDTO>> GetBookedSlotsAsync(int barberId, DateTime date)
+        {
+            var dayStart = date.Date;
+            var dayEnd = dayStart.AddDays(1);
+
+            var appointments = await _appointmentRepository.GetAllAsync(a =>
+                a.BarberId == barberId &&
+                a.Status == AppointmentStatus.Scheduled &&
+                !a.IsDeleted &&
+                a.AppointmentDateTime >= dayStart &&
+                a.AppointmentDateTime < dayEnd);
+
+            if (appointments.Count == 0)
+                return new List<AvailabilityDTO>();
+
+            var serviceIds = appointments.Select(a => a.ServiceId).Distinct().ToList();
+            var services = await _serviceRepository.GetAllAsync(s => serviceIds.Contains(s.Id) && !s.IsDeleted);
+            var durationByServiceId = services.ToDictionary(s => s.Id, s => s.DurationMinutes);
+
+            var result = new List<AvailabilityDTO>();
+
+            foreach (var appt in appointments)
+            {
+                if (!durationByServiceId.TryGetValue(appt.ServiceId, out var duration))
+                    continue;
+
+                var start = appt.AppointmentDateTime;
+                var end = start.AddMinutes(duration);
+
+                result.Add(new AvailabilityDTO
+                {
+                    AppointmentId = appt.Id,
+                    Start = start,
+                    End = end,
+                    ServiceId = appt.ServiceId
+                });
+            }
+
+            return result.OrderBy(x => x.Start).ToList();
+        }
+
     }
 }

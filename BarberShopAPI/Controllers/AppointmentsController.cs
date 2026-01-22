@@ -27,6 +27,14 @@ namespace BarberShopAPI.Controllers
         {
             return Ok();
         }
+
+        [HttpGet("availability")]
+        public async Task<IActionResult> GetAvailability([FromQuery] int barberId, [FromQuery] DateTime date)
+        {
+            var booked = await _appointmentService.GetBookedSlotsAsync(barberId, date);
+            return Ok(booked);
+        }
+
     }
 }
 
