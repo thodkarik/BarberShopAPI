@@ -3,6 +3,7 @@ using BarberShopAPI.Data;
 using BarberShopAPI.DTO;
 using BarberShopAPI.Exceptions;
 using BarberShopAPI.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace BarberShopAPI.Services
 {
@@ -10,11 +11,13 @@ namespace BarberShopAPI.Services
     {
         private readonly IRepository<Appointment> _appointmentRepository;
         private readonly IRepository<Service> _serviceRepository;
+        private readonly AppDbContext _context;
 
-        public AppointmentService(IRepository<Appointment> appointmentRepository, IRepository<Service> serviceRepository)
+        public AppointmentService(IRepository<Appointment> appointmentRepository, IRepository<Service> serviceRepository, AppDbContext context)
         {
             _appointmentRepository = appointmentRepository;
             _serviceRepository = serviceRepository;
+            _context = context;
         }
 
         public async Task<Appointment> CreateAsync(CreateAppointmentDTO createAppointmentDTO)
@@ -137,5 +140,61 @@ namespace BarberShopAPI.Services
             return result.OrderBy(x => x.Start).ToList();
         }
 
+        public async Task<AppointmentDetailsDTO> GetByIdAsync(int id)
+        {
+            var appt = await _context.Appointments
+        .AsNoTracking()
+        .Include(a => a.Customer)
+        .Include(a => a.Barber)
+        .Include(a => a.Service)
+        .FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted);
+
+            if (appt == null)
+                throw new NotFoundException("APPOINTMENT", $"Appointment with id {id} was not found");
+
+            return new AppointmentDetailsDTO
+            {
+                Id = appt.Id,
+                AppointmentDateTime = appt.AppointmentDateTime,
+                Status = appt.Status,
+
+                CustomerId = appt.CustomerId,
+                CustomerFullName = $"{appt.Customer.FirstName} {appt.Customer.LastName}",
+
+                BarberId = appt.BarberId,
+                BarberFullName = $"{appt.Barber.FirstName} {appt.Barber.LastName}",
+
+                ServiceId = appt.ServiceId,
+                ServiceName = appt.Service.Name,
+                DurationMinutes = appt.Service.DurationMinutes,
+                Price = appt.Service.Price
+            };
+        }
+
+        public async Task UpdateStatusAsync(int id, AppointmentStatus newStatus)
+        {
+            var appt = await GetEntityByIdAsync(id);
+
+            if (appt.Status != AppointmentStatus.Scheduled)
+                throw new ConflictException("APPOINTMENT", "Only scheduled appointments can change status");
+
+            if (newStatus != AppointmentStatus.Completed && newStatus != AppointmentStatus.Canceled)
+                throw new BadRequestException("APPOINTMENT", "Invalid status transition");
+
+            appt.Status = newStatus;
+            appt.UpdatedAt = DateTime.UtcNow;
+
+            _appointmentRepository.Update(appt);
+            await _appointmentRepository.SaveChangesAsync();
+        }
+
+        private async Task<Appointment> GetEntityByIdAsync(int id)
+        {
+            var appt = await _appointmentRepository.GetByIdAsync(id);
+            if (appt == null || appt.IsDeleted)
+                throw new NotFoundException("APPOINTMENT", $"Appointment with id {id} was not found");
+
+            return appt;
+        }
     }
 }

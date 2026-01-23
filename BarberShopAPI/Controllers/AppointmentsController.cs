@@ -1,6 +1,7 @@
 ﻿using BarberShopAPI.DTO;
 using BarberShopAPI.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace BarberShopAPI.Controllers
 {
@@ -23,9 +24,10 @@ namespace BarberShopAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            return Ok();
+            var dto = await _appointmentService.GetByIdAsync(id);
+            return Ok(dto);
         }
 
         [HttpGet("availability")]
@@ -34,6 +36,15 @@ namespace BarberShopAPI.Controllers
             var booked = await _appointmentService.GetBookedSlotsAsync(barberId, date);
             return Ok(booked);
         }
+
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateAppointmentStatusDTO request)
+        {
+            await _appointmentService.UpdateStatusAsync(id, request.Status);
+            return NoContent();
+        }
+
+
 
     }
 }
