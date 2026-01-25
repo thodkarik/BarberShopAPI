@@ -196,5 +196,39 @@ namespace BarberShopAPI.Services
 
             return appt;
         }
+
+        public async Task<List<MyAppointmentDTO>> GetMyAppointmentsAsync(int userId)
+        {
+            // Βρίσκουμε Customer profile με βάση το UserId (1-1 σχέση)
+            var customer = await _context.Customers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.UserId == userId && !c.IsDeleted);
+
+            if (customer == null)
+                throw new NotFoundException("CUSTOMER", "Customer profile not found for this user");
+
+            // Φέρνουμε όλα τα appointments του customer
+            var appointments = await _context.Appointments
+                .AsNoTracking()
+                .Include(a => a.Barber)
+                .Include(a => a.Service)
+                .Where(a => a.CustomerId == customer.Id && !a.IsDeleted)
+                .OrderByDescending(a => a.AppointmentDateTime)
+                .ToListAsync();
+
+            // Map σε DTO για καθαρό response χωρίς cycles
+            return appointments.Select(a => new MyAppointmentDTO
+            {
+                Id = a.Id,
+                AppointmentDateTime = a.AppointmentDateTime,
+                Status = a.Status,
+                BarberId = a.BarberId,
+                BarberName = $"{a.Barber.FirstName} {a.Barber.LastName}",
+                ServiceId = a.ServiceId,
+                ServiceName = a.Service.Name,
+                DurationMinutes = a.Service.DurationMinutes,
+                Price = a.Service.Price
+            }).ToList();
+        }
     }
 }

@@ -2,6 +2,7 @@
 using BarberShopAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace BarberShopAPI.Controllers
@@ -46,6 +47,17 @@ namespace BarberShopAPI.Controllers
         {
             await _appointmentService.UpdateStatusAsync(id, request.Status);
             return NoContent();
+        }
+
+        [Authorize(Roles = "Customer")]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMyAppointments()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var result = await _appointmentService.GetMyAppointmentsAsync(userId);
+
+            return Ok(result);
         }
 
 

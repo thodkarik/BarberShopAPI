@@ -10,5 +10,6 @@ namespace BarberShopAPI.Services
         Task<List<AvailabilityDTO>> GetBookedSlotsAsync(int barberId, DateTime date);
         Task<AppointmentDetailsDTO> GetByIdAsync(int id);
         Task UpdateStatusAsync(int id, AppointmentStatus status);
+        Task<List<MyAppointmentDTO>> GetMyAppointmentsAsync(int userId);
     }
 }
