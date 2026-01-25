@@ -29,8 +29,15 @@
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(ex, "Unhandled exception occurred");
-                    await HandleGenericException(context);
+                    Log.Error(ex, "Unhandled exception for {Method} {Path}", context.Request.Method, context.Request.Path);
+
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/json";
+                    await context.Response.WriteAsync(JsonSerializer.Serialize(new
+                    {
+                        code = "INTERNAL_SERVER_ERROR",
+                        message = "An unexpected error occurred."
+                    }));
                 }
             }
 

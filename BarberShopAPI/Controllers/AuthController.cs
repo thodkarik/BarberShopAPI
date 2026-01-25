@@ -1,7 +1,10 @@
-﻿using BarberShopAPI.Data;
+﻿using BarberShopAPI.Core.Enums;
+using BarberShopAPI.Data;
 using BarberShopAPI.DTO;
+using BarberShopAPI.Exceptions;
 using BarberShopAPI.Security;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -54,6 +57,68 @@ namespace BarberShopAPI.Controllers
             );
 
             return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
+        }
+
+        [HttpPost("signup")]
+        public async Task<IActionResult> Signup([FromBody] CustomerSignupDTO request)
+        {
+            var usernameExists = await _context.Users.AnyAsync(u => u.Username == request.Username && !u.IsDeleted);
+            if (usernameExists)
+                throw new ConflictException("USER", "Username already exists");
+
+            var emailExists = await _context.Users.AnyAsync(u => u.Email == request.Email && !u.IsDeleted);
+            if (emailExists)
+                throw new ConflictException("USER", "Email already exists");
+
+            var user = new User
+            {
+                Username = request.Username,
+                Email = request.Email,
+                Password = PasswordHashUtil.Hash(request.Password),
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                UserRole = UserRole.Customer
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            var customer = new Customer
+            {
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                PhoneNumber = request.PhoneNumber,
+                UserId = user.Id
+            };
+
+            _context.Customers.Add(customer);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, new
+            {
+                user.Id,
+                user.Username,
+                user.Email,
+                Role = user.UserRole.ToString()
+            });
+        }
+
+        [HttpGet("users/{id}")]
+        public async Task<IActionResult> GetUserById(int id)
+        {
+            var user = await _context.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted);
+
+            if (user == null)
+                throw new NotFoundException("USER", $"User with id {id} not found");
+
+            return Ok(new
+            {
+                user.Id,
+                user.Username,
+                user.Email,
+                Role = user.UserRole.ToString()
+            });
         }
     }
 }
