@@ -1,5 +1,6 @@
 ﻿using BarberShopAPI.DTO;
 using BarberShopAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
@@ -16,6 +17,7 @@ namespace BarberShopAPI.Controllers
             _appointmentService = appointmentService;
         }
 
+        [Authorize(Roles = "Customer,Receptionist,Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateAppointmentDTO request)
         {
@@ -23,6 +25,7 @@ namespace BarberShopAPI.Controllers
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
+        [Authorize(Roles = "Receptionist,Barber,Admin")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -37,6 +40,7 @@ namespace BarberShopAPI.Controllers
             return Ok(booked);
         }
 
+        [Authorize(Roles = "Receptionist,Admin")]
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateAppointmentStatusDTO request)
         {
