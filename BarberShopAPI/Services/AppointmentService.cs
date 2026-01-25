@@ -12,15 +12,21 @@ namespace BarberShopAPI.Services
         private readonly IRepository<Appointment> _appointmentRepository;
         private readonly IRepository<Service> _serviceRepository;
         private readonly AppDbContext _context;
+        private readonly IRepository<Customer> _customerRepository;
 
-        public AppointmentService(IRepository<Appointment> appointmentRepository, IRepository<Service> serviceRepository, AppDbContext context)
+        public AppointmentService(
+            IRepository<Appointment> appointmentRepository,
+            IRepository<Service> serviceRepository, 
+            AppDbContext context, 
+            IRepository<Customer> customerRepository)
         {
             _appointmentRepository = appointmentRepository;
             _serviceRepository = serviceRepository;
             _context = context;
+            _customerRepository = customerRepository;
         }
 
-        public async Task<Appointment> CreateAsync(CreateAppointmentDTO createAppointmentDTO)
+        public async Task<Appointment> CreateAsync(int userId, CreateAppointmentDTO createAppointmentDTO)
         {
             var start = createAppointmentDTO.AppointmentDateTime;
 
@@ -83,9 +89,17 @@ namespace BarberShopAPI.Services
                     throw new ConflictException("APPOINTMENT", "Selected time slot is not available");
             }
 
+            var customer = await _customerRepository.GetAllAsync(c => c.UserId == userId && !c.IsDeleted);
+            var customerEntity = customer.FirstOrDefault();
+
+            if (customerEntity == null)
+            {
+                throw new NotFoundException("CUSTOMER", "Customer profile not found for this user.");
+            }
+
             var appointment = new Appointment
             {
-                CustomerId = createAppointmentDTO.CustomerId,
+                CustomerId = customerEntity.Id,
                 BarberId = createAppointmentDTO.BarberId,
                 ServiceId = createAppointmentDTO.ServiceId,
                 AppointmentDateTime = start,

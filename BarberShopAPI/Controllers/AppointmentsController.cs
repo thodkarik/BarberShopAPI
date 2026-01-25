@@ -18,12 +18,14 @@ namespace BarberShopAPI.Controllers
             _appointmentService = appointmentService;
         }
 
-        [Authorize(Roles = "Customer,Receptionist,Admin")]
+        [Authorize(Roles = "Customer")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateAppointmentDTO request)
         {
-            var created = await _appointmentService.CreateAsync(request);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var result = await _appointmentService.CreateAsync(userId, request);
+
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 
         [Authorize(Roles = "Receptionist,Barber,Admin")]
