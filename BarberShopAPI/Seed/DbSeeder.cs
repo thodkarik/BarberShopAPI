@@ -1,5 +1,6 @@
 ﻿using BarberShopAPI.Core.Enums;
 using BarberShopAPI.Data;
+using BarberShopAPI.Security;
 
 namespace BarberShopAPI.Data.Seed
 {
@@ -16,7 +17,7 @@ namespace BarberShopAPI.Data.Seed
             {
                 Username = "admin",
                 Email = "admin@barbershop.gr",
-                Password = "admin123", // demo μόνο
+                Password = PasswordHashUtil.Hash("admin123"), // demo μόνο
                 FirstName = "Admin",
                 LastName = "User",
                 UserRole = UserRole.Admin
@@ -26,7 +27,7 @@ namespace BarberShopAPI.Data.Seed
             {
                 Username = "barber1",
                 Email = "barber@barbershop.gr",
-                Password = "barber123",
+                Password = PasswordHashUtil.Hash("barber123"),
                 FirstName = "John",
                 LastName = "Barber",
                 UserRole = UserRole.Barber
@@ -36,7 +37,7 @@ namespace BarberShopAPI.Data.Seed
             {
                 Username = "customer1",
                 Email = "customer@barbershop.gr",
-                Password = "customer123",
+                Password = PasswordHashUtil.Hash("customer123"),
                 FirstName = "Mike",
                 LastName = "Customer",
                 UserRole = UserRole.Customer
