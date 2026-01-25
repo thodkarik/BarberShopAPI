@@ -96,6 +96,9 @@ namespace BarberShopAPI
                     };
                 });
 
+            builder.Services.AddAuthorization();
+
+
 
 
             var app = builder.Build();
