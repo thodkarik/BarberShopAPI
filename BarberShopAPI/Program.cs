@@ -42,6 +42,9 @@ namespace BarberShopAPI
 
             builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 
+            builder.Services.AddScoped<IBarberService, BarberService>();
+
+
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BarberShopAPI.Services
 {
-    public class BarberService
+    public class BarberService : IBarberService
     {
         private readonly AppDbContext _context;
 
