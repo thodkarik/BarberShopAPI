@@ -30,9 +30,10 @@ namespace BarberShopAPI.Controllers
 
         [Authorize(Roles = "Receptionist,Barber,Admin")]
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<ActionResult<AppointmentDetailsDTO>> GetById(int id)
         {
-            var dto = await _appointmentService.GetByIdAsync(id);
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var dto = await _appointmentService.GetByIdAsync(id, userId);
             return Ok(dto);
         }
 
@@ -45,9 +46,10 @@ namespace BarberShopAPI.Controllers
 
         [Authorize(Roles = "Receptionist,Admin")]
         [HttpPut("{id}/status")]
-        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateAppointmentStatusDTO request)
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateAppointmentStatusDTO dto)
         {
-            await _appointmentService.UpdateStatusAsync(id, request.Status);
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            await _appointmentService.UpdateStatusAsync(id, userId, dto.Status);
             return NoContent();
         }
 

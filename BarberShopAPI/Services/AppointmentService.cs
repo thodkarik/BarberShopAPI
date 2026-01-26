@@ -1,4 +1,5 @@
-﻿using BarberShopAPI.Core.Enums;
+﻿using AutoMapper;
+using BarberShopAPI.Core.Enums;
 using BarberShopAPI.Data;
 using BarberShopAPI.DTO;
 using BarberShopAPI.Exceptions;
@@ -13,20 +14,23 @@ namespace BarberShopAPI.Services
         private readonly IRepository<Service> _serviceRepository;
         private readonly AppDbContext _context;
         private readonly IRepository<Customer> _customerRepository;
+        private readonly IMapper _mapper;
 
         public AppointmentService(
             IRepository<Appointment> appointmentRepository,
             IRepository<Service> serviceRepository, 
             AppDbContext context, 
-            IRepository<Customer> customerRepository)
+            IRepository<Customer> customerRepository,
+            IMapper mapper)
         {
             _appointmentRepository = appointmentRepository;
             _serviceRepository = serviceRepository;
             _context = context;
             _customerRepository = customerRepository;
+            _mapper = mapper;
         }
 
-        public async Task<Appointment> CreateAsync(int userId, CreateAppointmentDTO createAppointmentDTO)
+        public async Task<AppointmentCreatedDTO> CreateAsync(int userId, CreateAppointmentDTO createAppointmentDTO)
         {
             var start = createAppointmentDTO.AppointmentDateTime;
 
@@ -110,7 +114,7 @@ namespace BarberShopAPI.Services
             await _appointmentRepository.AddAsync(appointment);
             await _appointmentRepository.SaveChangesAsync();
 
-            return appointment;
+            return _mapper.Map<AppointmentCreatedDTO>(appointment);
         }
 
         public async Task<List<AvailabilityDTO>> GetBookedSlotsAsync(int barberId, DateTime date)
@@ -154,41 +158,49 @@ namespace BarberShopAPI.Services
             return result.OrderBy(x => x.Start).ToList();
         }
 
-        public async Task<AppointmentDetailsDTO> GetByIdAsync(int id)
+        public async Task<AppointmentDetailsDTO> GetByIdAsync(int id, int userId)
         {
-            var appt = await _context.Appointments
-        .AsNoTracking()
-        .Include(a => a.Customer)
-        .Include(a => a.Barber)
-        .Include(a => a.Service)
-        .FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted);
+            var customer = (await _customerRepository.GetAllAsync(c => c.UserId == userId && !c.IsDeleted))
+                .FirstOrDefault();
 
-            if (appt == null)
-                throw new NotFoundException("APPOINTMENT", $"Appointment with id {id} was not found");
+            if (customer == null)
+                throw new NotFoundException("CUSTOMER", "Customer profile not found for this user.");
 
-            return new AppointmentDetailsDTO
-            {
-                Id = appt.Id,
-                AppointmentDateTime = appt.AppointmentDateTime,
-                Status = appt.Status,
+            var appointment = await _context.Appointments
+                .Include(a => a.Barber)
+                .Include(a => a.Service)
+                .FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted);
 
-                CustomerId = appt.CustomerId,
-                CustomerFullName = $"{appt.Customer.FirstName} {appt.Customer.LastName}",
+            if (appointment == null)
+                throw new NotFoundException("APPOINTMENT", "Appointment not found.");
 
-                BarberId = appt.BarberId,
-                BarberFullName = $"{appt.Barber.FirstName} {appt.Barber.LastName}",
+            if (appointment.CustomerId != customer.Id)
+                throw new ForbiddenException("APPOINTMENT", "You cannot access this appointment."); // αν δεν έχεις, κάνε Conflict/BadRequest προσωρινά
 
-                ServiceId = appt.ServiceId,
-                ServiceName = appt.Service.Name,
-                DurationMinutes = appt.Service.DurationMinutes,
-                Price = appt.Service.Price
-            };
+            var dto = _mapper.Map<AppointmentDetailsDTO>(appointment);
+            dto.DurationMinutes = appointment.Service.DurationMinutes;
+            dto.Price = appointment.Service.Price;
+
+            return dto;
         }
 
-        public async Task UpdateStatusAsync(int id, AppointmentStatus newStatus)
+        public async Task UpdateStatusAsync(int id, int userId, AppointmentStatus newStatus)
         {
-            var appt = await GetEntityByIdAsync(id);
+            var customer = (await _customerRepository.GetAllAsync(c => c.UserId == userId && !c.IsDeleted))
+                .FirstOrDefault();
 
+            if (customer == null)
+                throw new NotFoundException("CUSTOMER", "Customer profile not found for this user.");
+
+            var appt = await _appointmentRepository.GetByIdAsync(id);
+
+            if (appt == null || appt.IsDeleted)
+                throw new NotFoundException("APPOINTMENT", "Appointment not found.");
+
+            if (appt.CustomerId != customer.Id)
+                throw new ForbiddenException("APPOINTMENT", "You cannot update this appointment.");
+
+            // οι κανόνες που έχεις ήδη
             if (appt.Status != AppointmentStatus.Scheduled)
                 throw new ConflictException("APPOINTMENT", "Only scheduled appointments can change status");
 

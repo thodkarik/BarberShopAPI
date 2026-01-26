@@ -6,10 +6,10 @@ namespace BarberShopAPI.Services
 {
     public interface IAppointmentService
     {
-        Task<Appointment> CreateAsync(int userId, CreateAppointmentDTO createAppointmentDTO);
+        Task<AppointmentCreatedDTO> CreateAsync(int userId, CreateAppointmentDTO dto);
         Task<List<AvailabilityDTO>> GetBookedSlotsAsync(int barberId, DateTime date);
-        Task<AppointmentDetailsDTO> GetByIdAsync(int id);
-        Task UpdateStatusAsync(int id, AppointmentStatus status);
+        Task<AppointmentDetailsDTO> GetByIdAsync(int id, int userId);
+        Task UpdateStatusAsync(int id, int userId, AppointmentStatus newStatus);
         Task<List<MyAppointmentDTO>> GetMyAppointmentsAsync(int userId);
     }
 }
