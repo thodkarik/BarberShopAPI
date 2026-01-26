@@ -1,6 +1,7 @@
 ﻿using BarberShopAPI.Data;
 using BarberShopAPI.DTO;
 using BarberShopAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BarberShopAPI.Controllers
@@ -16,6 +17,7 @@ namespace BarberShopAPI.Controllers
             _serviceService = serviceService;
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<List<ServiceResponseDTO>>> GetAll()
         {
@@ -23,6 +25,7 @@ namespace BarberShopAPI.Controllers
             return Ok(services);
         }
 
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<ActionResult<ServiceResponseDTO>> GetById(int id)
         {
@@ -30,6 +33,7 @@ namespace BarberShopAPI.Controllers
             return Ok(service);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<ServiceResponseDTO>> Create(CreateServiceDTO dto)
         {
@@ -37,6 +41,7 @@ namespace BarberShopAPI.Controllers
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, UpdateServiceDTO dto)
         {
@@ -44,6 +49,7 @@ namespace BarberShopAPI.Controllers
             return NoContent();
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
