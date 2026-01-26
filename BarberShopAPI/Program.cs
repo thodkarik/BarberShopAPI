@@ -1,4 +1,6 @@
-
+using AutoMapper;
+using BarberShopAPI.Configuration;
+using Microsoft.Extensions.Logging;
 using BarberShopAPI.Data;
 using BarberShopAPI.Data.Seed;
 using BarberShopAPI.Helpers.BarberShopAPI.Middlewares;
@@ -44,6 +46,19 @@ namespace BarberShopAPI
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
+
+            builder.Services.AddSingleton<IMapper>(sp =>
+            {
+                var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+
+                var expr = new MapperConfigurationExpression();
+                expr.AddProfile<MapperConfig>();
+
+                var config = new MapperConfiguration(expr, loggerFactory);
+                return config.CreateMapper();
+            });
+
+
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
