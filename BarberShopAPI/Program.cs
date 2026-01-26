@@ -44,6 +44,9 @@ namespace BarberShopAPI
 
             builder.Services.AddScoped<IBarberService, BarberService>();
 
+            builder.Services.AddScoped<IReceptionistService, ReceptionistService>();
+
+
 
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
