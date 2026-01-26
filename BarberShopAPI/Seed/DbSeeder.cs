@@ -8,85 +8,111 @@ namespace BarberShopAPI.Data.Seed
     {
         public static void Seed(AppDbContext context)
         {
-            // Αν υπάρχουν ήδη δεδομένα, δεν ξανακάνουμε seed
-            if (context.Services.Any() || context.Barbers.Any() || context.Customers.Any())
-                return;
-
-            // Users
-            var adminUser = new User
+            if (!context.Users.Any(u => u.Username == "admin"))
             {
-                Username = "admin",
-                Email = "admin@barbershop.gr",
-                Password = PasswordHashUtil.Hash("admin123"), // demo μόνο
-                FirstName = "Admin",
-                LastName = "User",
-                UserRole = UserRole.Admin
-            };
+                context.Users.Add(new User
+                {
+                    Username = "admin",
+                    Email = "admin@barbershop.gr",
+                    Password = PasswordHashUtil.Hash("admin123"),
+                    FirstName = "Admin",
+                    LastName = "User",
+                    UserRole = UserRole.Admin
+                });
+            }
 
-            var barberUser = new User
+            if (!context.Users.Any(u => u.Username == "barber1"))
             {
-                Username = "barber1",
-                Email = "barber@barbershop.gr",
-                Password = PasswordHashUtil.Hash("barber123"),
-                FirstName = "John",
-                LastName = "Barber",
-                UserRole = UserRole.Barber
-            };
+                context.Users.Add(new User
+                {
+                    Username = "barber1",
+                    Email = "barber@barbershop.gr",
+                    Password = PasswordHashUtil.Hash("barber123"),
+                    FirstName = "John",
+                    LastName = "Barber",
+                    UserRole = UserRole.Barber
+                });
+            }
 
-            var customerUser = new User
+            if (!context.Users.Any(u => u.Username == "customer1"))
             {
-                Username = "customer1",
-                Email = "customer@barbershop.gr",
-                Password = PasswordHashUtil.Hash("customer123"),
-                FirstName = "Mike",
-                LastName = "Customer",
-                UserRole = UserRole.Customer
-            };
+                context.Users.Add(new User
+                {
+                    Username = "customer1",
+                    Email = "customer@barbershop.gr",
+                    Password = PasswordHashUtil.Hash("customer123"),
+                    FirstName = "Mike",
+                    LastName = "Customer",
+                    UserRole = UserRole.Customer
+                });
+            }
 
-            context.Users.AddRange(adminUser, barberUser, customerUser);
+            if (!context.Users.Any(u => u.Username == "reception1"))
+            {
+                context.Users.Add(new User
+                {
+                    Username = "reception1",
+                    Email = "reception1@test.com",
+                    Password = PasswordHashUtil.Hash("reception123"),
+                    FirstName = "Reception",
+                    LastName = "User",
+                    UserRole = UserRole.Receptionist
+                });
+            }
+
             context.SaveChanges();
 
-            // Barber
-            var barber = new Barber
-            {
-                FirstName = "John",
-                LastName = "Barber",
-                PhoneNumber = "6900000000",
-                UserId = barberUser.Id
-            };
+            var barberUser = context.Users.First(u => u.Username == "barber1");
+            var customerUser = context.Users.First(u => u.Username == "customer1");
 
-            // Customer
-            var customer = new Customer
+            if (!context.Barbers.Any(b => b.UserId == barberUser.Id))
             {
-                FirstName = "Mike",
-                LastName = "Customer",
-                PhoneNumber = "6911111111",
-                UserId = customerUser.Id
-            };
+                context.Barbers.Add(new Barber
+                {
+                    FirstName = "John",
+                    LastName = "Barber",
+                    PhoneNumber = "6900000000",
+                    UserId = barberUser.Id
+                });
+            }
 
-            context.Barbers.Add(barber);
-            context.Customers.Add(customer);
+            if (!context.Customers.Any(c => c.UserId == customerUser.Id))
+            {
+                context.Customers.Add(new Customer
+                {
+                    FirstName = "Mike",
+                    LastName = "Customer",
+                    PhoneNumber = "6911111111",
+                    UserId = customerUser.Id
+                });
+            }
+
             context.SaveChanges();
 
-            // Services
-            var haircut = new Service
+            if (!context.Services.Any(s => s.Name == "Simple Haircut"))
             {
-                Name = "Simple Haircut",
-                Description = "Basic haircut service",
-                DurationMinutes = 30,
-                Price = 10
-            };
+                context.Services.Add(new Service
+                {
+                    Name = "Simple Haircut",
+                    Description = "Basic haircut service",
+                    DurationMinutes = 30,
+                    Price = 10
+                });
+            }
 
-            var fullCare = new Service
+            if (!context.Services.Any(s => s.Name == "Full Care"))
             {
-                Name = "Full Care",
-                Description = "Haircut and beard care",
-                DurationMinutes = 60,
-                Price = 18
-            };
+                context.Services.Add(new Service
+                {
+                    Name = "Full Care",
+                    Description = "Haircut and beard care",
+                    DurationMinutes = 60,
+                    Price = 18
+                });
+            }
 
-            context.Services.AddRange(haircut, fullCare);
             context.SaveChanges();
         }
     }
 }
+
