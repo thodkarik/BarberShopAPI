@@ -1,13 +1,14 @@
 ﻿using BarberShopAPI.Data;
+using BarberShopAPI.DTO;
 
 namespace BarberShopAPI.Services
 {
     public interface IServiceService
     {
-        Task<List<Service>> GetAllAsync();
-        Task<Service> GetByIdAsync(int id);
-        Task<Service> CreateAsync(Service service);
-        Task<Service> UpdateAsync(int id, Service updatedService);
+        Task<List<ServiceResponseDTO>> GetAllAsync();
+        Task<ServiceResponseDTO> GetByIdAsync(int id);
+        Task<ServiceResponseDTO> CreateAsync(CreateServiceDTO dto);
+        Task UpdateAsync(int id, UpdateServiceDTO dto);
         Task DeleteAsync(int id);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using BarberShopAPI.Data;
+using BarberShopAPI.DTO;
 using BarberShopAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,35 +17,35 @@ namespace BarberShopAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllServices()
+        public async Task<ActionResult<List<ServiceResponseDTO>>> GetAll()
         {
             var services = await _serviceService.GetAllAsync();
             return Ok(services);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetServiceById(int id)
+        public async Task<ActionResult<ServiceResponseDTO>> GetById(int id)
         {
             var service = await _serviceService.GetByIdAsync(id);
             return Ok(service);
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateService(Service service)
+        public async Task<ActionResult<ServiceResponseDTO>> Create(CreateServiceDTO dto)
         {
-            var created = await _serviceService.CreateAsync(service);
-            return CreatedAtAction(nameof(GetServiceById), new { id = created.Id }, created);
+            var created = await _serviceService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateService(int id, Service service)
+        public async Task<IActionResult> Update(int id, UpdateServiceDTO dto)
         {
-            await _serviceService.UpdateAsync(id, service);
+            await _serviceService.UpdateAsync(id, dto);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteService(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             await _serviceService.DeleteAsync(id);
             return NoContent();

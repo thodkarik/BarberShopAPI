@@ -1,4 +1,6 @@
-﻿using BarberShopAPI.Data;
+﻿using AutoMapper;
+using BarberShopAPI.Data;
+using BarberShopAPI.DTO;
 using BarberShopAPI.Exceptions;
 using BarberShopAPI.Repositories;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
@@ -8,63 +10,67 @@ namespace BarberShopAPI.Services
     public class ServiceService : IServiceService
     {
         private readonly IRepository<Service> _serviceRepository;
+        private readonly IMapper _mapper;
 
-        public ServiceService(IRepository<Service> serviceRepository)
+        public ServiceService(IRepository<Service> serviceRepository, IMapper mapper)
         {
             _serviceRepository = serviceRepository;
+            _mapper = mapper;
         }
 
-        public Task<List<Service>> GetAllAsync()
-            => _serviceRepository.GetAllAsync(s => !s.IsDeleted);
+        public async Task<List<ServiceResponseDTO>> GetAllAsync()
+        {
+            var services = await _serviceRepository.GetAllAsync(s => !s.IsDeleted);
+            return _mapper.Map<List<ServiceResponseDTO>>(services);
+        }
 
-        public async Task<Service> GetByIdAsync(int id)
+        public async Task<ServiceResponseDTO> GetByIdAsync(int id)
         {
             var service = await _serviceRepository.GetByIdAsync(id);
 
             if (service == null || service.IsDeleted)
-                throw new NotFoundException("SERVICE", $"Service with id {id} was not found");
+                throw new NotFoundException("SERVICE", "Service not found.");
 
-            return service;
+            return _mapper.Map<ServiceResponseDTO>(service);
         }
 
-        public async Task<Service> CreateAsync(Service service)
+        public async Task<ServiceResponseDTO> CreateAsync(CreateServiceDTO dto)
         {
-            if (string.IsNullOrWhiteSpace(service.Name))
-                throw new BadRequestException("SERVICE", "Service name is required");
+            var entity = _mapper.Map<Service>(dto);
 
-            await _serviceRepository.AddAsync(service);
+            await _serviceRepository.AddAsync(entity);
             await _serviceRepository.SaveChangesAsync();
 
-            return service;
+            return _mapper.Map<ServiceResponseDTO>(entity);
         }
 
         public async Task DeleteAsync(int id)
         {
-            var existing = await GetByIdAsync(id);
+            var entity = await _serviceRepository.GetByIdAsync(id);
 
-            existing.IsDeleted = true;
-            existing.DeletedAt = DateTime.UtcNow;
+            if (entity == null || entity.IsDeleted)
+                throw new NotFoundException("SERVICE", "Service not found.");
 
-            _serviceRepository.Update(existing);
+            entity.IsDeleted = true;
+            entity.DeletedAt = DateTime.UtcNow;
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            _serviceRepository.Update(entity);
             await _serviceRepository.SaveChangesAsync();
         }
 
-        public async Task<Service> UpdateAsync(int id, Service updatedService)
+        public async Task UpdateAsync(int id, UpdateServiceDTO dto)
         {
-            if (id != updatedService.Id)
-                throw new BadRequestException("SERVICE", "Id mismatch");
+            var entity = await _serviceRepository.GetByIdAsync(id);
 
-            var existing = await GetByIdAsync(id);
+            if (entity == null || entity.IsDeleted)
+                throw new NotFoundException("SERVICE", "Service not found.");
 
-            existing.Name = updatedService.Name;
-            existing.DurationMinutes = updatedService.DurationMinutes;
-            existing.Price = updatedService.Price;
-            existing.UpdatedAt = DateTime.UtcNow;
+            _mapper.Map(dto, entity); // <-- ενημερώνει fields
+            entity.UpdatedAt = DateTime.UtcNow;
 
-            _serviceRepository.Update(existing);
+            _serviceRepository.Update(entity);
             await _serviceRepository.SaveChangesAsync();
-
-            return existing;
         }
     }
 }
