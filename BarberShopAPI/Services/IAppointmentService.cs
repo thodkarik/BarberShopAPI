@@ -11,5 +11,6 @@ namespace BarberShopAPI.Services
         Task<AppointmentDetailsDTO> GetByIdAsync(int id, int userId);
         Task UpdateStatusAsync(int id, int userId, AppointmentStatus newStatus);
         Task<List<MyAppointmentDTO>> GetMyAppointmentsAsync(int userId);
+        Task<List<AvailabilitySlotDTO>> GetAvailabilityAsync(DateOnly date, int barberId, int serviceId);
     }
 }

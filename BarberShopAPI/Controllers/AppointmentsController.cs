@@ -38,10 +38,13 @@ namespace BarberShopAPI.Controllers
         }
 
         [HttpGet("availability")]
-        public async Task<IActionResult> GetAvailability([FromQuery] int barberId, [FromQuery] DateTime date)
+        public async Task<ActionResult<List<AvailabilitySlotDTO>>> GetAvailability(
+            [FromQuery] DateOnly date,
+            [FromQuery] int barberId,
+            [FromQuery] int serviceId)
         {
-            var booked = await _appointmentService.GetBookedSlotsAsync(barberId, date);
-            return Ok(booked);
+            var slots = await _appointmentService.GetAvailabilityAsync(date, barberId, serviceId);
+            return Ok(slots);
         }
 
         [Authorize(Roles = "Receptionist,Admin")]
