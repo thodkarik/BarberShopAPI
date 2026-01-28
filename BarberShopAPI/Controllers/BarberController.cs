@@ -1,30 +1,37 @@
 ﻿using BarberShopAPI.Data;
 using BarberShopAPI.DTO;
-using BarberShopAPI.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace BarberShopAPI.Controllers
 {
     [ApiController]
-    [Route("api/barber")]
-    [Authorize(Roles = "Barber")]
-    public class BarberController : ControllerBase
+    [Route("api/[controller]")]
+    public class BarbersController : ControllerBase
     {
-        private readonly IBarberService _barberService;
+        private readonly AppDbContext _context;
 
-        public BarberController(IBarberService barberService)
+        public BarbersController(AppDbContext context)
         {
-            _barberService = barberService;
+            _context = context;
         }
 
-        [HttpGet("appointments")]
-        public async Task<ActionResult<List<BarberAppointmentDTO>>> GetMyAppointments([FromQuery] DateTime? date = null)
+        [HttpGet]
+        public async Task<ActionResult<List<BarberListDTO>>> GetAll()
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var list = await _barberService.GetMyAppointmentsAsync(userId, date);
+            var list = await _context.Barbers
+                .AsNoTracking()
+                .Where(b => !b.IsDeleted)
+                .OrderBy(b => b.LastName).ThenBy(b => b.FirstName)
+                .Select(b => new BarberListDTO
+                {
+                    Id = b.Id,
+                    FullName = b.FirstName + " " + b.LastName
+                })
+                .ToListAsync();
+
             return Ok(list);
         }
     }
 }
+
