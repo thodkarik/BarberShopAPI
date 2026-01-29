@@ -263,12 +263,10 @@ namespace BarberShopAPI.Services
 
         public async Task<List<AvailabilitySlotDTO>> GetAvailabilityAsync(DateOnly date, int barberId, int serviceId)
         {
-            // 1) Basic validation (κλειστά Κυριακή)
             var day = date.ToDateTime(TimeOnly.MinValue);
             if (day.DayOfWeek == DayOfWeek.Sunday)
                 return new List<AvailabilitySlotDTO>();
 
-            // 2) Service duration
             var service = await _serviceRepository.GetByIdAsync(serviceId);
             if (service == null || service.IsDeleted)
                 throw new NotFoundException("SERVICE", "Service not found.");
@@ -277,16 +275,13 @@ namespace BarberShopAPI.Services
             if (duration != 30 && duration != 60)
                 throw new BadRequestException("SERVICE", "Service duration must be 30 or 60 minutes.");
 
-            // 3) Barber exists?
             var barber = await _barberRepository.GetByIdAsync(barberId);
             if (barber == null || barber.IsDeleted)
                 throw new NotFoundException("BARBER", "Barber not found.");
 
-            // 4) Business hours: 10:00 - 20:00 (τελευταίο slot εξαρτάται από duration)
             var open = date.ToDateTime(new TimeOnly(10, 0));
             var close = date.ToDateTime(new TimeOnly(20, 0));
 
-            // 5) Load existing appointments for that barber on that day (Scheduled only)
             var existingAppointments = await _appointmentRepository.GetAllAsync(a =>
                 a.BarberId == barberId &&
                 !a.IsDeleted &&
@@ -294,33 +289,28 @@ namespace BarberShopAPI.Services
                 a.AppointmentDateTime >= open &&
                 a.AppointmentDateTime < close);
 
-            // Για να βρούμε end time των existing, χρειαζόμαστε duration per serviceId
             var existingServiceIds = existingAppointments.Select(a => a.ServiceId).Distinct().ToList();
             var existingServices = await _serviceRepository.GetAllAsync(s =>
                 existingServiceIds.Contains(s.Id) && !s.IsDeleted);
 
             var durationByServiceId = existingServices.ToDictionary(s => s.Id, s => s.DurationMinutes);
 
-            // 6) Generate slots every 30 minutes
             var slots = new List<AvailabilitySlotDTO>();
             for (var start = open; start < close; start = start.AddMinutes(30))
             {
                 var end = start.AddMinutes(duration);
 
-                // Πρέπει να χωράει μέσα στο ωράριο
                 if (end > close) continue;
 
-                // Overlap check με κάθε υπάρχον appointment
                 var overlaps = false;
                 foreach (var appt in existingAppointments)
                 {
                     if (!durationByServiceId.TryGetValue(appt.ServiceId, out var apptDuration))
-                        apptDuration = 30; // fallback
+                        apptDuration = 30; 
 
                     var apptStart = appt.AppointmentDateTime;
                     var apptEnd = apptStart.AddMinutes(apptDuration);
 
-                    // overlap logic: start < apptEnd && end > apptStart
                     if (start < apptEnd && end > apptStart)
                     {
                         overlaps = true;

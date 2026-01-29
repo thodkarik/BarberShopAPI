@@ -17,6 +17,11 @@ namespace BarberShopAPI.Configuration
                         .ForMember(d => d.BarberFullName, opt => opt.MapFrom(a => a.Barber.FirstName + " " + a.Barber.LastName))
                         .ForMember(d => d.ServiceName, opt => opt.MapFrom(a => a.Service.Name));
 
+            CreateMap<Appointment, BarberAppointmentItemDTO>()
+                        .ForMember(d => d.ServiceName, opt => opt.MapFrom(s => s.Service.Name))
+                        .ForMember(d => d.CustomerName, opt => opt.MapFrom(s => s.Customer.FirstName + " " + s.Customer.LastName));
+
+
         }
     }
 }
