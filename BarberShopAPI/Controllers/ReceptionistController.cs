@@ -7,7 +7,7 @@ namespace BarberShopAPI.Controllers
 {
     [ApiController]
     [Route("api/receptionist")]
-    [Authorize(Roles = "Receptionist")]
+    [Authorize(Roles = "Receptionist,Admin")]
     public class ReceptionistController : ControllerBase
     {
         private readonly IReceptionistService _service;
